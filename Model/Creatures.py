@@ -98,14 +98,16 @@ class Erbast(Creatures):
 
     def findHerd(self, listOfHerds):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
+
         amountOfErbast = listOfHerds[self.row][self.column].lenOfErbast()
         row, column = self.row, self.column
-        for kernel_idx in range(self.kernel.shape[0]):
-            kernel_row, kernel_col = self.kernel[kernel_idx]
-            if listOfHerds[kernel_row][kernel_col].terrainType == "Ground":
-                if amountOfErbast < listOfHerds[kernel_row][kernel_col].lenOfErbast():
-                    amountOfErbast = listOfHerds[kernel_row][kernel_col].lenOfErbast()
-                    row, column = listOfHerds[kernel_row][kernel_col].row, listOfHerds[kernel_row][kernel_col].column
+
+        for (r, c), _ in np.ndenumerate(self.kernel):
+            if listOfHerds[r][c].terrainType == "Ground":
+                if amountOfErbast < listOfHerds[r][c].lenOfErbast():
+                    amountOfErbast = listOfHerds[r][c].lenOfErbast()
+                    row, column = listOfHerds[r][c].row, listOfHerds[r][c].column
+
         return np.array([row, column])
 
     def findFood(self, listOfVegetobs):
@@ -190,15 +192,17 @@ class Carviz(Creatures):
         listOfCreatures.append(carv2)
 
     def findHerd(self, listOfHerds):
-        self.kernel = self.get_adjacent_cells(self.row, self.column)
+        self.kernel = np.array(self.get_adjacent_cells(self.row, self.column))
 
         amountOfErbast = listOfHerds[self.row][self.column].lenOfErbast()
         row, column = self.row, self.column
-        for i in range(len(self.kernel)):
-            if amountOfErbast < listOfHerds[self.kernel[i][0]][self.kernel[i][1]].lenOfErbast():
-                    amountOfErbast = listOfHerds[self.kernel[i][0]][self.kernel[i][1]].lenOfErbast()
-                    row = listOfHerds[self.kernel[i][0]][self.kernel[i][1]].row
-                    column = listOfHerds[self.kernel[i][0]][self.kernel[i][1]].column
+
+        for (r, c), _ in np.ndenumerate(self.kernel):
+            if listOfHerds[r][c].terrainType == "Ground":
+                if amountOfErbast < listOfHerds[r][c].lenOfErbast():
+                    amountOfErbast = listOfHerds[r][c].lenOfErbast()
+                    row, column = listOfHerds[r][c].row, listOfHerds[r][c].column
+
         return np.array([row, column])
 
     def findPride(self, listOfPrides):
