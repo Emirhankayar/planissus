@@ -10,7 +10,7 @@ class Creatures:
     # Generates a list of adjacent cells
     def get_adjacent_cells(self, row, col):
         adjacent_cells = []
-        max_row, max_col = 10, 10
+        max_row, max_col = 100, 100
         for i in range(row - 1, row + 2):
             for j in range(col - 1, col + 2):
                 if (i >= 0 and j >= 0 and i < max_row and j < max_col and (i != row or j != col)):
@@ -150,11 +150,17 @@ class Carviz(Creatures):
     def __init__(self):
         super().__init__()
         self._energy = np.random.randint(20, 100)
-        self.lifetime = 1000
-        self.age = 0
+        self.lifetime = 20
+        self._age = 0
         self.soc_attitude = 1
         self.previouslyVisited = None
         self.hasMoved = False
+
+    # def __str__(self):
+    #     return f"(coordinates: {self.row}, {self.column}, Energy: {self.energy}, Age: {self.age}, SocAtt: {self.soc_attitude}, {self.previouslyVisited}, {self.hasMoved})"
+    #
+    # def __repr__(self):
+    #     return self.__str__()
 
     @property
     def energy(self):
@@ -164,17 +170,25 @@ class Carviz(Creatures):
     def energy(self, newEnergy):
         self._energy = newEnergy
 
+    @property
+    def age(self):
+        return self._age
+
+    @age.setter
+    def age(self, newAge):
+        self._age = newAge
+
     def aging(self, listOfCreatures):
         a = self
         self.age += 1
         if self.energy <= 0:
             listOfCreatures.remove(a)
-        elif self.age % 10 == 0:
-            self.energy -= 1
         elif self.age >= self.lifetime:
             if self.energy > 20:
                 self.spawnOffsprings(listOfCreatures)
             listOfCreatures.remove(a)
+        elif self.age % 10 == 0:
+            self.energy -= 1
 
     def spawnOffsprings(self, listOfCreatures):
 
@@ -192,7 +206,8 @@ class Carviz(Creatures):
         listOfCreatures.append(carv2)
 
     def findHerd(self, listOfHerds):
-        self.kernel = np.array(self.get_adjacent_cells(self.row, self.column))
+        # TODO ERROR HERE
+        self.kernel = self.get_adjacent_cells(self.row, self.column)
 
         amountOfErbast = listOfHerds[self.row][self.column].lenOfErbast()
         row, column = self.row, self.column
@@ -219,15 +234,15 @@ class Carviz(Creatures):
 
     def trackHerd(self, listOfVegetobs):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
-        lowestDensity = listOfVegetobs[self.kernel[0][0]][self.kernel[0][1]].vegetob.density
+        maxDensity = 0
         row, column = self.row, self.column
-        for i in range(len(self.kernel)):
-            if listOfVegetobs[self.kernel[i][0]][self.kernel[i][1]].terrainType == "Ground":
-                if lowestDensity >= listOfVegetobs[self.kernel[i][0]][self.kernel[i][1]].vegetob.density:
-                    lowestDensity = listOfVegetobs[self.kernel[i][0]][self.kernel[i][1]].vegetob.density
-                    row = listOfVegetobs[self.kernel[i][0]][self.kernel[i][1]].row
-                    column = listOfVegetobs[self.kernel[i][0]][self.kernel[i][1]].column
-
+        for kernel_idx in range(self.kernel.shape[0]):
+            kernel_row, kernel_col = self.kernel[kernel_idx]
+            if listOfVegetobs[kernel_row][kernel_col].terrainType == "Ground":
+                if maxDensity < listOfVegetobs[kernel_row][kernel_col].vegetob.density:
+                    maxDensity = listOfVegetobs[kernel_row][kernel_col].vegetob.density
+                    row, column = listOfVegetobs[kernel_row][kernel_col].row, listOfVegetobs[kernel_row][
+                        kernel_col].column
         return np.array([row, column])
 
     def move(self, listOfVegetobs, coordinates):
@@ -239,15 +254,16 @@ class Carviz(Creatures):
         self.energy -= 1
 
     def hunt(self, listOfVegetobs):
-
         erbSwap = None
         maxEnergy = 0
         for erb in listOfVegetobs[self.row][self.column].erbast:
             if maxEnergy <= erb.energy:
                 maxEnergy = erb.energy
+                erbSwap = erb
         if erbSwap is not None:
             energy_to_eat = min(100 - self.energy, maxEnergy)
             # Update the energy levels of the creature and plant
             self.energy += energy_to_eat
             listOfVegetobs[self.row][self.column].erbast.remove(erbSwap)
+
 

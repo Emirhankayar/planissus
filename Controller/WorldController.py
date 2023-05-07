@@ -7,10 +7,10 @@ from matplotlib.animation import FuncAnimation
 import matplotlib
 from Model.Creatures import Erbast, Carviz, Vegetob
 from Model.WorldModel import Cell, Herd, Pride
+
 matplotlib.use('TkAgg')
 
-
-NUM_CELLS = 10
+NUM_CELLS = 100
 
 cellsList = np.empty((NUM_CELLS, NUM_CELLS), dtype=object)
 start = time.time()
@@ -22,25 +22,21 @@ for i in range(NUM_CELLS):
         vg.density = vg.generateDensity()
         cellsList[i][j] = Cell(i, j, "Ground", vg)
 
-
 erb = Erbast()
 erb.row = 3
 erb.column = 3
-
 cellsList[3][3].erbast.append(erb)
 
 carv = Carviz()
 carv.row = 5
 carv.column = 5
-pride = Pride(5, 5)
-pride.appendCarviz(carv)
-cellsList[5][5].pride.append(pride)
+
+carv2 = Carviz()
+carv2.row = 6
+carv2.column = 6
 
 day = 0
 max_days = 1000
-
-
-
 
 colorsList = [[0 for q in range(NUM_CELLS)] for w in range(NUM_CELLS)]
 cmap = colors.ListedColormap(['blue', 'green', 'yellow', 'red', 'black'])
@@ -52,12 +48,15 @@ ax = fig.add_subplot(121)
 ax2 = fig.add_subplot(222)
 ax3 = fig.add_subplot(224)
 
+ax.minorticks_off()
+ax2.minorticks_off()
+ax3.minorticks_off()
+
 # Adjust the position and size of each subplot
 fig.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05, wspace=0.2, hspace=0.2)
 ax.set_position([0.05, 0.05, 0.45, 0.9])
 ax2.set_position([0.55, 0.55, 0.4, 0.4])
 ax3.set_position([0.55, 0.05, 0.4, 0.4])
-
 
 x_erb_data = [0]
 ydata = [1]
@@ -84,20 +83,21 @@ im = ax.imshow(colorsList, cmap=cmap, norm=norm)
 erb_counter = 0
 carv_counter = 0
 
-text_objects = [[ax.text(n, v, "hello", ha="center", va="center", color="white") for n in range(NUM_CELLS)] for v in range(NUM_CELLS)]
-
+avg_time = 0
 
 
 def update(day):
-
+    t1 = time.perf_counter()
 
     erb_counter = 0
     carv_counter = 0
 
     movementList = cellsList.copy()
 
-# GROWING
-
+    # GROWING
+    if day == 80:
+        cellsList[5][5].pride.append(carv)
+        cellsList[6][6].pride.append(carv2)
 
     for sublist in cellsList:
         # Iterate over each object in the sublist
@@ -105,18 +105,15 @@ def update(day):
             # Apply the method to the object
             veg.vegetob.grow()
 
-# MOVEMENT
+    # MOVEMENT
     for row in range(len(cellsList)):
         for column in range(len(cellsList[row])):
             if len(cellsList[row][column].erbast) > 0:
                 cellsList[row][column].erbast.herdDecision(movementList)
             if len(cellsList[row][column].pride) > 0:
-                for pr in cellsList[row][column].pride:
-                    if len(pr) > 0:
+                cellsList[row][column].pride.prideDecision(movementList)
 
-                        pr.prideDecision(movementList)
-
-# GRAZING
+    # GRAZING
 
     for row in range(len(cellsList)):
         for column in range(len(cellsList[row])):
@@ -124,32 +121,29 @@ def update(day):
                 for er in cellsList[row][column].erbast:
                     if not er.hasMoved:
                         er.graze(cellsList)
+            cellsList[row][column].erbast.groupAging()
+
+            if len(cellsList[row][column].pride) > 0:
                 for cr in cellsList[row][column].pride:
-                    # cr.struggle()
-                    for c in cr:
-                        if not c.hasMoved:
-                            c.hunt(cellsList)
-                cellsList[row][column].erbast.groupAging()
-                cellsList[row][column].pride.groupAging()
-
-
+                    if len(cellsList[row][column].erbast) > 0:
+                        cr.hunt(cellsList)
+            cellsList[row][column].pride.groupAging()
 
     for v in range(NUM_CELLS):
         for n in range(NUM_CELLS):
             if cellsList[v][n].erbast and cellsList[v][n].pride:
-                carv_counter+=1
-                erb_counter+=1
+                carv_counter += 1
+                erb_counter += 1
                 colorsList[v][n] = 45
             elif cellsList[v][n].erbast:
-                erb_counter+=1
+                erb_counter += 1
                 colorsList[v][n] = 25
 
-            elif len(cellsList[v][n].pride) > 0:
+            elif cellsList[v][n].pride:
                 colorsList[v][n] = 35
-                carv_counter+=1
+                carv_counter += 1
             else:
                 colorsList[v][n] = 15
-            text_objects[v][n].set_text(cellsList[v][n].vegetob.density)
 
     im.set_data(colorsList)
     ax.set_title(f"Day {day}")
@@ -183,12 +177,8 @@ def update(day):
     ax3.set_title('Population of Carviz over time')
 
 
-    # Return the updated plots
-    return im, ax, ax2, ax3
-
-
-
 from functools import partial
+
 update_frame = partial(update, cellsList.copy())
 
 ani = FuncAnimation(fig, update, frames=max_days, interval=60, blit=False)
