@@ -12,8 +12,9 @@ matplotlib.use('TkAgg')
 
 NUM_CELLS = 100
 
+
+
 cellsList = np.empty((NUM_CELLS, NUM_CELLS), dtype=object)
-start = time.time()
 for i in range(NUM_CELLS):
     for j in range(NUM_CELLS):
         vg = Vegetob()
@@ -23,17 +24,17 @@ for i in range(NUM_CELLS):
         cellsList[i][j] = Cell(i, j, "Ground", vg)
 
 erb = Erbast()
-erb.row = 3
-erb.column = 3
-cellsList[3][3].erbast.append(erb)
+erb.row = 50
+erb.column = 50
+cellsList[50][50].erbast.append(erb)
 
 carv = Carviz()
-carv.row = 5
-carv.column = 5
+carv.row = 54
+carv.column = 54
 
 carv2 = Carviz()
-carv2.row = 6
-carv2.column = 6
+carv2.row = 60
+carv2.column = 60
 
 day = 0
 max_days = 1000
@@ -44,7 +45,7 @@ bounds = [0, 10, 20, 30, 40, 50]
 norm = colors.BoundaryNorm(bounds, cmap.N)
 
 fig = plt.figure(figsize=(10, 6))
-ax = fig.add_subplot(121)
+ax   = fig.add_subplot(121)
 ax2 = fig.add_subplot(222)
 ax3 = fig.add_subplot(224)
 
@@ -86,7 +87,7 @@ carv_counter = 0
 avg_time = 0
 
 
-def update(day):
+def update(day):#
     t1 = time.perf_counter()
 
     erb_counter = 0
@@ -95,9 +96,9 @@ def update(day):
     movementList = cellsList.copy()
 
     # GROWING
-    if day == 80:
-        cellsList[5][5].pride.append(carv)
-        cellsList[6][6].pride.append(carv2)
+    if day == 200:
+        cellsList[54][54].pride.append(carv)
+        cellsList[60][60].pride.append(carv2)
 
     for sublist in cellsList:
         # Iterate over each object in the sublist
@@ -113,15 +114,21 @@ def update(day):
             if len(cellsList[row][column].pride) > 0:
                 cellsList[row][column].pride.prideDecision(movementList)
 
+    # STRUGGLE
+
+    for row in range(len(cellsList)):
+        for column in range(len(cellsList[row])):
+            if len(cellsList[row][column].pride) > 0:
+                cellsList[row][column].pride.fight_between_prides(cellsList[row][column].pride, cellsList)
+
     # GRAZING
 
     for row in range(len(cellsList)):
         for column in range(len(cellsList[row])):
             if len(cellsList[row][column].erbast) > 0:
-                for er in cellsList[row][column].erbast:
-                    if not er.hasMoved:
-                        er.graze(cellsList)
-            cellsList[row][column].erbast.groupAging()
+                cellsList[row][column].erbast.herdGraze(cellsList)
+
+                cellsList[row][column].erbast.groupAging()
 
             if len(cellsList[row][column].pride) > 0:
                 for cr in cellsList[row][column].pride:
@@ -144,6 +151,8 @@ def update(day):
                 carv_counter += 1
             else:
                 colorsList[v][n] = 15
+
+
 
     im.set_data(colorsList)
     ax.set_title(f"Day {day}")

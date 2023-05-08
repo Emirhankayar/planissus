@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 
 
@@ -58,7 +60,7 @@ class Vegetob(Creatures):
 class Erbast(Creatures):
     def __init__(self):
         super().__init__()
-        self._energy = np.random.randint(20, 100)
+        self._energy = 100
         self.lifetime = 10
         self.age = 0
         self.soc_attitude = 1
@@ -77,12 +79,12 @@ class Erbast(Creatures):
     def aging(self, listOfCreatures):
         a = self
         self.age += 1
-        if self.energy <= 0:
+        if self.energy <= 1.0:
             listOfCreatures.remove(a)
         elif self.age % 10 == 0:
             self.energy -= 1
-        elif self.age >= self.lifetime:
-            if self.energy > 20:
+        if self.age >= self.lifetime:
+            if self.energy >= 20:
                 self.spawnOffsprings(listOfCreatures)
             listOfCreatures.remove(a)
 
@@ -98,16 +100,18 @@ class Erbast(Creatures):
 
     def findHerd(self, listOfHerds):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
-
-        amountOfErbast = listOfHerds[self.row][self.column].lenOfErbast()
+        maxErbast = 0
         row, column = self.row, self.column
-
-        for (r, c), _ in np.ndenumerate(self.kernel):
-            if listOfHerds[r][c].terrainType == "Ground":
-                if amountOfErbast < listOfHerds[r][c].lenOfErbast():
-                    amountOfErbast = listOfHerds[r][c].lenOfErbast()
-                    row, column = listOfHerds[r][c].row, listOfHerds[r][c].column
-
+        for kernel_idx in range(self.kernel.shape[0]):
+            kernel_row, kernel_col = self.kernel[kernel_idx]
+            if listOfHerds[kernel_row][kernel_col].terrainType == "Ground":
+                if maxErbast < listOfHerds[kernel_row][kernel_col].lenOfErbast():
+                    maxErbast = listOfHerds[kernel_row][kernel_col].lenOfErbast()
+                    row, column = listOfHerds[kernel_row][kernel_col].row, \
+                                  listOfHerds[kernel_row][kernel_col].column
+        if row == self.row and column == self.column:
+            rnd = np.random.randint(0, len(self.kernel) - 1)
+            row, column = np.array([self.kernel[rnd][0], self.kernel[rnd][1]])
         return np.array([row, column])
 
     def findFood(self, listOfVegetobs):
@@ -121,6 +125,9 @@ class Erbast(Creatures):
                     maxDensity = listOfVegetobs[kernel_row][kernel_col].vegetob.density
                     row, column = listOfVegetobs[kernel_row][kernel_col].row, listOfVegetobs[kernel_row][
                         kernel_col].column
+        if row == self.row and column == self.column:
+            rnd = np.random.randint(0, len(self.kernel) - 1)
+            row, column = np.array([self.kernel[rnd][0], self.kernel[rnd][1]])
         return np.array([row, column])
 
     def changeSocAttitude(self):
@@ -137,18 +144,22 @@ class Erbast(Creatures):
         listOfVegetobs[oldRow][oldCol].delErbast(a)
         self.energy -= 1
 
-    def graze(self, listOfVegetobs):
-        energy_to_eat = min(100 - self.energy, listOfVegetobs[self.row][self.column].vegetob.density)
+    def graze(self, listOfVegetobs, amountToEat):
+
+
+        energy_to_eat = min(100 - self.energy, amountToEat)
         # Update the energy levels of the creature and plant
         self.energy += energy_to_eat
         listOfVegetobs[self.row][self.column].vegetob.density -= energy_to_eat
         self.changeSocAttitude()
 
 
+
 class Carviz(Creatures):
 
     def __init__(self):
         super().__init__()
+        self.previous_position = None
         self._energy = np.random.randint(20, 100)
         self.lifetime = 20
         self._age = 0
@@ -177,6 +188,8 @@ class Carviz(Creatures):
     @age.setter
     def age(self, newAge):
         self._age = newAge
+
+
 
     def aging(self, listOfCreatures):
         a = self
@@ -245,9 +258,11 @@ class Carviz(Creatures):
                         kernel_col].column
         return np.array([row, column])
 
+
     def move(self, listOfVegetobs, coordinates):
         a = self
         oldRow, oldCol = self.row, self.column
+        self.previous_position = (oldRow, oldCol)  # Save the previous position
         self.row, self.column = coordinates
         listOfVegetobs[self.row][self.column].appendPride(self)
         listOfVegetobs[oldRow][oldCol].delPride(a)
@@ -265,5 +280,6 @@ class Carviz(Creatures):
             # Update the energy levels of the creature and plant
             self.energy += energy_to_eat
             listOfVegetobs[self.row][self.column].erbast.remove(erbSwap)
+
 
 

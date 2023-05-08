@@ -4,6 +4,6 @@
 
 # TODO representation: cells inspection, logs and replay
 
-# TODO struggle + use Seba to adjust math values
+# TODO struggle + use Emir to adjust math values
 
 # TODO fix fucking carviz
