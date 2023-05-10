@@ -37,7 +37,7 @@ class Cell:
         if self.terrainType == "Ground":
             return Vegetob()
         else:
-            return None
+            return "Water"
 
     def __str__(self):
         if self.terrainType == "Ground":
@@ -70,47 +70,39 @@ class Herd(list):
 
     def herdDecision(self, cellsList):
 
-        individual = self[0]
-
         foodGroup = []
-        foodCoords = individual.findFood(cellsList)
-
-        grazeGroup = []
-        grazeCoords = np.array([self.row, self.column])
-
         findHerdGroup = []
-        herdCoords = individual.findHerd(cellsList)
+        randomMovementGroup = []
 
-        randomStayGroup = []
-        rnd = np.random.randint(0, len(individual.kernel) - 1)
-        randomCoords = np.array([individual.kernel[rnd][0], individual.kernel[rnd][1]])
         population = cellsList[self.row][self.column].lenOfErbast()
+        movementCoords = np.array([self.row, self.column])
 
+        print(population, "population")
         for erbast in self:
 
-            # Calculate the second variable inversely proportional to the first variable
             if population == 100:
                 populationInvers = 1
             else:
                 populationInvers = 100 - population
             socialAttitude = populationInvers * erbast.energy / 100
 
-            if socialAttitude >= 40:
-                erbast.hasMoved = True
-                findHerdGroup.append(erbast)
-            elif socialAttitude >= 20:
-                erbast.hasMoved = True
-                foodGroup.append(erbast)
-            else:
-                erbast.hasMoved = False
-                grazeGroup.append(erbast)
+            movementCoords = erbast.decideMovement(cellsList, socialAttitude >= 50)
 
-        if len(findHerdGroup) > 0:
-            self.herdMove(group=findHerdGroup, listOfCells=cellsList, coordinates=herdCoords)
-        if len(foodGroup) > 0:
-            self.herdMove(group=foodGroup, listOfCells=cellsList, coordinates=foodCoords)
-        if len(randomStayGroup) > 0:
-            self.herdMove(group=randomStayGroup, listOfCells=cellsList, coordinates=randomCoords)
+            grazeCoords = np.array([self.row, self.column])
+
+            if movementCoords[0] == grazeCoords[0] and movementCoords[1] == grazeCoords[1]:
+                erbast.hasMoved = False
+            else:
+                if movementCoords[0] == erbast.findHerd(cellsList)[0] and movementCoords[1] == \
+                        erbast.findHerd(cellsList)[1]:
+                    erbast.move(cellsList, movementCoords)
+                elif movementCoords[0] == erbast.findFood(cellsList)[0] and movementCoords[1] == \
+                        erbast.findFood(cellsList)[1]:
+                    erbast.move(cellsList, movementCoords)
+                else:
+                    erbast.move(cellsList, movementCoords)
+
+
 
     def herdMove(self, group, listOfCells, coordinates):
         if len(group) > 0:
@@ -123,7 +115,7 @@ class Herd(list):
         startvingErbasts = []
         i = 0
         for erb in self:
-            if erb.energy <= 20 and not erb.hasMoved:
+            if erb.energy <= 40 and not erb.hasMoved:
                 startvingErbasts.append(i)
             i += 1
 
@@ -222,50 +214,39 @@ class Pride(list):
 
     def prideDecision(self, cellsList):
 
-        individual = self[0]
-
+        foodGroup = []
         findHerdGroup = []
-        herdCoords = individual.findHerd(cellsList)
+        randomMovementGroup = []
 
-        huntGroup = []
-        huntCoords = np.array([self.row, self.column])
-
-        trackHerdGroup = []
-        trackHerdCoords = individual.trackHerd(cellsList)
-
-        randomStayGroup = []
-        rnd = np.random.randint(0, len(individual.kernel) - 1)
-        randomCoords = np.array([individual.kernel[rnd][0], individual.kernel[rnd][1]])
         population = cellsList[self.row][self.column].lenOfErbast()
+        movementCoords = np.array([self.row, self.column])
 
-        for carviz in self:
 
-            # Calculate the second variable inversely proportional to the first variable
+        for carv in self:
+
             if population == 100:
                 populationInvers = 1
             else:
                 populationInvers = 100 - population
-            socialAttitude = populationInvers * carviz.energy / 100
+            socialAttitude = populationInvers * carv.energy / 100
 
-            if socialAttitude >= 40:
-                carviz.hasMoved = True
-                trackHerdGroup.append(carviz)
-            elif socialAttitude >= 20:
-                carviz.hasMoved = True
-                findHerdGroup.append(carviz)
-            elif cellsList[self.row][self.column].lenOfErbast() > 0:
-                    carviz.hasMoved = False
-                    huntGroup.append(carviz)
+            movementCoords = carv.decideMovement(cellsList, socialAttitude >= 50)
+
+            grazeCoords = np.array([self.row, self.column])
+
+            if movementCoords[0] == grazeCoords[0] and movementCoords[1] == grazeCoords[1]:
+                carv.hasMoved = False
             else:
-                carviz.hasMoved = True
-                randomStayGroup.append(carviz)
+                if movementCoords[0] == carv.findHerd(cellsList)[0] and movementCoords[1] == \
+                        carv.findHerd(cellsList)[1]:
+                    carv.move(cellsList, movementCoords)
+                elif movementCoords[0] == carv.trackHerd(cellsList)[0] and movementCoords[1] == \
+                        carv.trackHerd(cellsList)[1]:
+                    carv.move(cellsList, movementCoords)
+                else:
+                    carv.move(cellsList, movementCoords)
 
-        if len(findHerdGroup) > 0:
-            self.prideMove(group=findHerdGroup, listOfCells=cellsList, coordinates=herdCoords)
-        if len(trackHerdGroup) > 0:
-            self.prideMove(group=trackHerdGroup, listOfCells=cellsList, coordinates=trackHerdCoords)
-        if len(randomStayGroup) > 0:
-            self.prideMove(group=randomStayGroup, listOfCells=cellsList, coordinates=randomCoords)
+
 
     def prideMove(self, group, listOfCells, coordinates):
         if len(group) > 0:
@@ -294,4 +275,3 @@ class Pride(list):
 
         prides = list(prides_dict.values())
         return prides
-

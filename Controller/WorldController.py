@@ -1,3 +1,4 @@
+import random
 import time
 import cProfile
 import numpy as np
@@ -17,6 +18,7 @@ NUM_CELLS = 100
 cellsList = np.empty((NUM_CELLS, NUM_CELLS), dtype=object)
 for i in range(NUM_CELLS):
     for j in range(NUM_CELLS):
+        rnd = random.random()
         vg = Vegetob()
         vg.row = i
         vg.column = j
@@ -29,8 +31,8 @@ erb.column = 50
 cellsList[50][50].erbast.append(erb)
 
 carv = Carviz()
-carv.row = 54
-carv.column = 54
+carv.row = 40
+carv.column = 40
 
 carv2 = Carviz()
 carv2.row = 60
@@ -45,7 +47,7 @@ bounds = [0, 10, 20, 30, 40, 50]
 norm = colors.BoundaryNorm(bounds, cmap.N)
 
 fig = plt.figure(figsize=(10, 6))
-ax   = fig.add_subplot(121)
+ax = fig.add_subplot(121)
 ax2 = fig.add_subplot(222)
 ax3 = fig.add_subplot(224)
 
@@ -90,14 +92,15 @@ avg_time = 0
 def update(day):#
     t1 = time.perf_counter()
 
+
     erb_counter = 0
     carv_counter = 0
 
     movementList = cellsList.copy()
 
     # GROWING
-    if day == 200:
-        cellsList[54][54].pride.append(carv)
+    if day == 50:
+        cellsList[40][40].pride.append(carv)
         cellsList[60][60].pride.append(carv2)
 
     for sublist in cellsList:
@@ -127,14 +130,13 @@ def update(day):#
         for column in range(len(cellsList[row])):
             if len(cellsList[row][column].erbast) > 0:
                 cellsList[row][column].erbast.herdGraze(cellsList)
-
                 cellsList[row][column].erbast.groupAging()
 
             if len(cellsList[row][column].pride) > 0:
                 for cr in cellsList[row][column].pride:
                     if len(cellsList[row][column].erbast) > 0:
                         cr.hunt(cellsList)
-            cellsList[row][column].pride.groupAging()
+                cellsList[row][column].pride.groupAging()
 
     for v in range(NUM_CELLS):
         for n in range(NUM_CELLS):
@@ -149,9 +151,10 @@ def update(day):#
             elif cellsList[v][n].pride:
                 colorsList[v][n] = 35
                 carv_counter += 1
-            else:
+            elif cellsList[v][n].terrainType == "Ground":
                 colorsList[v][n] = 15
-
+            elif cellsList[v][n].terrainType == "Water":
+                colorsList[v][n] = 5
 
 
     im.set_data(colorsList)
@@ -162,6 +165,7 @@ def update(day):#
     prev_pop = populations_erbast[-1]
     populations_erbast.append(np.concatenate([prev_pop, new_pop]))
     ydata = populations_erbast[-1]
+
 
     ax2.clear()
     ax2.plot(x_erb_data, ydata, color='yellow')
