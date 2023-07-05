@@ -1,23 +1,30 @@
 import random
-
 import numpy as np
 
+class Creatures():
+    NUM_CELLS = None
 
-class Creatures:
     def __init__(self):
         self._row = 0
         self._column = 0
-        self.kernel = self.get_adjacent_cells(self.row, self.column)
+        self.kernel = np.empty((0, 0), dtype=object)
 
-    # Generates a list of adjacent cells
+    @classmethod
+    def update_num_cells(cls, num_cells):
+        cls.NUM_CELLS = num_cells
+
     def get_adjacent_cells(self, row, col):
         adjacent_cells = []
-        max_row, max_col = 100, 100
+        max_row, max_col = Creatures.NUM_CELLS, Creatures.NUM_CELLS
         for i in range(row - 1, row + 2):
             for j in range(col - 1, col + 2):
-                if (i >= 0 and j >= 0 and i < max_row and j < max_col and (i != row or j != col)):
+                if (
+                    (i >= 0 and j >= 0 and i < max_row and j < max_col)
+                    and (i != row or j != col)
+                ):
                     adjacent_cells.append([i, j])
         return np.array(adjacent_cells)
+
 
     @property
     def row(self):
@@ -58,10 +65,10 @@ class Vegetob(Creatures):
 
 
 class Erbast(Creatures):
-    def __init__(self):
+    def __init__(self, lifetime=10):
         super().__init__()
         self._energy = np.random.randint(35, 95)
-        self.lifetime = 10
+        self.lifetime = lifetime
         self.age = 0
         self.soc_attitude = 1
         self.inHerd = False
@@ -77,48 +84,45 @@ class Erbast(Creatures):
         self._energy = newEnergy
 
     def aging(self, listOfCreatures):
-        a = self
         self.age += 1
+        
         if self.energy <= 1.0:
-            listOfCreatures.remove(a)
-        elif self.age % 10 == 0:
-            self.energy -= 1
+            listOfCreatures.remove(self)
         elif self.age >= self.lifetime:
             if self.energy >= 20:
                 self.spawnOffsprings(listOfCreatures)
-            listOfCreatures.remove(a)
+            listOfCreatures.remove(self)
+        elif self.age % self.lifetime == 0:
+            self.energy -= 1
 
     def decideMovement(self, listOfHerd, isSocAttitudeHigh):
-
         movement_coordinates = self.findHerd(listOfHerd)
         notFound = movement_coordinates[0] == self.row and movement_coordinates[1] == self.column
+
         if isSocAttitudeHigh and self.energy >= 30:
             if notFound:
                 movement_coordinates = self.findFood(listOfHerd)
                 notFound = movement_coordinates[0] == self.row and movement_coordinates[1] == self.column
-                if notFound:
-                    if listOfHerd[self.row][self.column].vegetob.density >= 35:
-                        return np.array([self.row, self.column])
-                    else:
-                        rnd = np.random.randint(0, len(self.kernel) - 1)
-                        row, column = np.array([self.kernel[rnd][0], self.kernel[rnd][1]])
-                        return np.array([row, column])
+
+            if notFound:
+                if listOfHerd[self.row][self.column].vegetob.density >= 35:
+                    return np.array([self.row, self.column])
                 else:
-                    rnd = np.random.randint(0, len(self.kernel) - 1)
-                    row, column = np.array([self.kernel[rnd][0], self.kernel[rnd][1]])
-                    return np.array([row, column])
-            else:
-                return movement_coordinates
+                    if len(self.kernel) > 0:
+                        rnd = np.random.randint(0, len(self.kernel))
+                        return np.array(self.kernel[rnd])
+
         else:
             movement_coordinates = self.findFood(listOfHerd)
             notFound = movement_coordinates[0] == self.row and movement_coordinates[1] == self.column
+
             if notFound and listOfHerd[self.row][self.column].vegetob.density >= 15:
                 return np.array([self.row, self.column])
-            else:
-                return movement_coordinates
+
+        return movement_coordinates
 
     def spawnOffsprings(self, listOfCreatures):
-        energyOfOffsprings = int(self.energy / 2)
+        energyOfOffsprings = self.energy // 2  # Use floor division for integer result
         erb1 = Erbast()
         erb1.energy = energyOfOffsprings
         erb1.row, erb1.column = self.row, self.column
@@ -127,31 +131,40 @@ class Erbast(Creatures):
         erb2.row, erb2.column = self.row, self.column
         listOfCreatures.extend([erb1, erb2])
 
+
     def findHerd(self, listOfHerds):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
         maxErbast = 0
-        row, column = self.row, self.column
-        for kernel_idx in range(self.kernel.shape[0]):
-            kernel_row, kernel_col = self.kernel[kernel_idx]
+        maxErbastCells = []
+        
+        for kernel_row, kernel_col in self.kernel:
             if listOfHerds[kernel_row][kernel_col].terrainType == "Ground":
-                if maxErbast < listOfHerds[kernel_row][kernel_col].lenOfErbast():
-                    maxErbast = listOfHerds[kernel_row][kernel_col].lenOfErbast()
-                    row, column = listOfHerds[kernel_row][kernel_col].row, \
-                                  listOfHerds[kernel_row][kernel_col].column
-        return np.array([row, column])
+                lenOfErbast = listOfHerds[kernel_row][kernel_col].lenOfErbast()
+                
+                if lenOfErbast > maxErbast:
+                    maxErbast = lenOfErbast
+                    maxErbastCells = [(kernel_row, kernel_col)]
+                elif lenOfErbast == maxErbast:
+                    maxErbastCells.append((kernel_row, kernel_col))
+        
+        return np.array(random.choice(maxErbastCells)) if maxErbastCells else np.array([self.row, self.column])
 
     def findFood(self, listOfVegetobs):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
         maxDensity = 0
-        row, column = self.row, self.column
-        for kernel_idx in range(self.kernel.shape[0]):
-            kernel_row, kernel_col = self.kernel[kernel_idx]
+        maxDensityCells = []
+        
+        for kernel_row, kernel_col in self.kernel:
             if listOfVegetobs[kernel_row][kernel_col].terrainType == "Ground":
-                if maxDensity < listOfVegetobs[kernel_row][kernel_col].vegetob.density:
-                    maxDensity = listOfVegetobs[kernel_row][kernel_col].vegetob.density
-                    row, column = listOfVegetobs[kernel_row][kernel_col].row, listOfVegetobs[kernel_row][
-                        kernel_col].column
-        return np.array([row, column])
+                density = listOfVegetobs[kernel_row][kernel_col].vegetob.density
+                
+                if density > maxDensity:
+                    maxDensity = density
+                    maxDensityCells = [(kernel_row, kernel_col)]
+                elif density == maxDensity:
+                    maxDensityCells.append((kernel_row, kernel_col))
+        
+        return np.array(random.choice(maxDensityCells)) if maxDensityCells else np.array([self.row, self.column])
 
     def changeSocAttitude(self):
         if self.energy >= 20 or self.energy >= 80:
@@ -160,39 +173,39 @@ class Erbast(Creatures):
             self.soc_attitude = 1
 
     def move(self, listOfVegetobs, coordinates):
-        a = self
         oldRow, oldCol = self.row, self.column
-        self.row, self.column = coordinates
-        listOfVegetobs[self.row][self.column].appendErbast(self)
-        listOfVegetobs[oldRow][oldCol].delErbast(a)
+        newRow, newCol = coordinates
+        
+        oldCell = listOfVegetobs[oldRow][oldCol]
+        newCell = listOfVegetobs[newRow][newCol]
+        
+        oldCell.erbast.remove(self)
+        newCell.erbast.append(self)
+        
+        self.row, self.column = newRow, newCol
         self.energy -= 1
 
+
     def graze(self, listOfVegetobs, amountToEat):
-
-        energy_to_eat = min(100 - self.energy, amountToEat)
-        # Update the energy levels of the creature and plant
-        self.energy += energy_to_eat
-        listOfVegetobs[self.row][self.column].vegetob.density -= energy_to_eat
+        energyLimit = 100 - self.energy
+        energyToEat = min(energyLimit, amountToEat)
+        
+        self.energy += energyToEat
+        listOfVegetobs[self.row][self.column].vegetob.density -= energyToEat
+        
         self.changeSocAttitude()
-
 
 class Carviz(Creatures):
 
-    def __init__(self):
+    def __init__(self, lifetime=10):
         super().__init__()
         self.previous_position = None
-        self._energy = np.random.randint(500, 1000)
-        self.lifetime = 10
+        self._energy = np.random.randint(35, 95)
+        self.lifetime = lifetime
         self._age = 0
         self.soc_attitude = 1
         self.previouslyVisited = None
         self.hasMoved = False
-
-    # def __str__(self):
-    #     return f"(coordinates: {self.row}, {self.column}, Energy: {self.energy}, Age: {self.age}, SocAtt: {self.soc_attitude}, {self.previouslyVisited}, {self.hasMoved})"
-    #
-    # def __repr__(self):
-    #     return self.__str__()
 
     @property
     def energy(self):
@@ -211,104 +224,129 @@ class Carviz(Creatures):
         self._age = newAge
 
     def aging(self, listOfCreatures):
-        a = self
         self.age += 1
-        if self.energy <= 0:
-            listOfCreatures.remove(a)
+        
+        if self.energy <= 1.0:
+            listOfCreatures.remove(self)
         elif self.age >= self.lifetime:
-            if self.energy > 20:
+            if self.energy >= 20:
                 self.spawnOffsprings(listOfCreatures)
-            listOfCreatures.remove(a)
-        elif self.age % 10 == 0:
+            listOfCreatures.remove(self)
+        elif self.age % self.lifetime == 0:
             self.energy -= 1
 
     def spawnOffsprings(self, listOfCreatures):
-
-        energyOfOffsprings = int(self.energy / 2)
+        energyOfOffsprings = self.energy // 2  # Use floor division for integer result
 
         carv1 = Carviz()
         carv1.energy = energyOfOffsprings
-        carv1.row = self.row
-        carv1.column = self.column
+        carv1.row, carv1.column = self.row, self.column
+
         carv2 = Carviz()
         carv2.energy = energyOfOffsprings
-        carv2.row = self.row
-        carv2.column = self.column
-        listOfCreatures.append(carv1)
-        listOfCreatures.append(carv2)
+        carv2.row, carv2.column = carv1.row, carv1.column  # Assign row and column from carv1
+
+        listOfCreatures.extend([carv1, carv2])
 
     def findHerd(self, listOfHerds):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
         maxErbast = 0
-        row, column = self.row, self.column
-        for kernel_idx in range(self.kernel.shape[0]):
-            kernel_row, kernel_col = self.kernel[kernel_idx]
-            if listOfHerds[kernel_row][kernel_col].terrainType == "Ground":
-                if maxErbast < listOfHerds[kernel_row][kernel_col].lenOfErbast():
-                    maxErbast = listOfHerds[kernel_row][kernel_col].lenOfErbast()
-                    row, column = listOfHerds[kernel_row][kernel_col].row, \
-                                  listOfHerds[kernel_row][kernel_col].column
-        return np.array([row, column])
+        maxErbastCells = []
+
+        for kernel_row, kernel_col in self.kernel:
+            herd = listOfHerds[kernel_row][kernel_col]
+
+            if herd.terrainType == "Ground":
+                lenOfErbast = herd.lenOfErbast()
+
+                if lenOfErbast > maxErbast:
+                    maxErbast = lenOfErbast
+                    maxErbastCells = [(herd.row, herd.column)]
+                elif lenOfErbast == maxErbast:
+                    maxErbastCells.append((herd.row, herd.column))
+
+        return np.array(random.choice(maxErbastCells)) if maxErbastCells else np.array([self.row, self.column])
+
 
     def findPride(self, listOfPrides):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
-        amountOfPride = listOfPrides[self.row][self.column].lenOfCarviz()
+        pride = listOfPrides[self.row][self.column]
+        amountOfPride = pride.lenOfCarviz()
         row, column = self.row, self.column
-        for i in range(len(self.kernel)):
-            if listOfPrides[self.kernel[i][0]][self.kernel[i][1]].terrainType == "Ground":
-                if amountOfPride < listOfPrides[self.kernel[i][0]][self.kernel[i][1]].lenOfErbast():
-                    amountOfPride = listOfPrides[self.kernel[i][0]][self.kernel[i][1]].lenOfErbast()
-                    row = listOfPrides[self.kernel[i][0]][self.kernel[i][1]].row
-                    column = listOfPrides[self.kernel[i][0]][self.kernel[i][1]].column
+
+        for kernel_row, kernel_col in self.kernel:
+            pride_cell = listOfPrides[kernel_row][kernel_col]
+
+            if pride_cell.terrainType == "Ground":
+                lenOfErbast = pride_cell.lenOfErbast()
+
+                if amountOfPride < lenOfErbast:
+                    amountOfPride = lenOfErbast
+                    row, column = pride_cell.row, pride_cell.column
+
         return np.array([row, column])
 
     def trackHerd(self, listOfVegetobs):
+        def density_key(idx):
+            if listOfVegetobs[idx[0]][idx[1]].terrainType == "Ground":
+                return listOfVegetobs[idx[0]][idx[1]].vegetob.density
+            else:
+                return -1
+
         self.kernel = self.get_adjacent_cells(self.row, self.column)
-        minDensity = 100
-        row, column = self.row, self.column
-        for kernel_idx in range(self.kernel.shape[0]):
-            kernel_row, kernel_col = self.kernel[kernel_idx]
-            if listOfVegetobs[kernel_row][kernel_col].terrainType == "Ground":
-                if minDensity < listOfVegetobs[kernel_row][kernel_col].vegetob.density:
-                    minDensity = listOfVegetobs[kernel_row][kernel_col].vegetob.density
-                    row, column = listOfVegetobs[kernel_row][kernel_col].row, listOfVegetobs[kernel_row][
-                        kernel_col].column
+        row, column = max(self.kernel, key=density_key)
         return np.array([row, column])
 
+
     def move(self, listOfVegetobs, coordinates):
-        a = self
         oldRow, oldCol = self.row, self.column
         self.previous_position = (oldRow, oldCol)  # Save the previous position
         self.row, self.column = coordinates
-        listOfVegetobs[self.row][self.column].appendPride(self)
-        listOfVegetobs[oldRow][oldCol].delPride(a)
+
+        newCell = listOfVegetobs[self.row][self.column]
+        newCell.appendPride(self)
+        listOfVegetobs[oldRow][oldCol].delPride(self)
+
         self.energy -= 1
 
+
+
     def hunt(self, listOfVegetobs):
-        erbSwap = None
-        maxEnergy = 0
-        for erb in listOfVegetobs[self.row][self.column].erbast:
-            if maxEnergy <= erb.energy:
-                maxEnergy = erb.energy
-                erbSwap = erb
+        erbast = listOfVegetobs[self.row][self.column].erbast
+        erbSwap = max(erbast, key=lambda erb: erb.energy, default=None)
+        
         if erbSwap is not None:
+            maxEnergy = erbSwap.energy
             energy_to_eat = min(100 - self.energy, maxEnergy)
+            
             # Update the energy levels of the creature and plant
             self.energy += energy_to_eat
-            listOfVegetobs[self.row][self.column].erbast.remove(erbSwap)
+            erbast.remove(erbSwap)
 
     def decideMovement(self, listOfPride, isSocAttitudeHigh):
+        movement_coordinates = np.array([self.row, self.column])
 
-        movement_coordinates = self.findHerd(listOfPride)
-        notFound = movement_coordinates[0] == self.row and movement_coordinates[1] == self.column
-
-        if listOfPride[self.row][self.column].lenOfErbast() > listOfPride[self.row][self.column].lenOfCarviz():
-            return np.array([self.row, self.column])
-        else:
+        if listOfPride[self.row][self.column].lenOfErbast() > 0:
             if isSocAttitudeHigh and self.energy >= 40:
-                if notFound:
-                    return self.findPride(listOfPride)
-                else:
+                movement_coordinates = self.findPride(listOfPride)
+                if not np.array_equal(movement_coordinates, [self.row, self.column]):
+                    return movement_coordinates
+            elif not isSocAttitudeHigh and self.energy >= 40:
+                movement_coordinates = self.findHerd(listOfPride)
+                if not np.array_equal(movement_coordinates, [self.row, self.column]):
+                    return movement_coordinates
+        else:
+            if isSocAttitudeHigh:
+                movement_coordinates = self.findPride(listOfPride)
+                if not np.array_equal(movement_coordinates, [self.row, self.column]):
                     return movement_coordinates
             else:
-                return self.trackHerd(listOfPride)
+                movement_coordinates = self.findHerd(listOfPride)
+                if not np.array_equal(movement_coordinates, [self.row, self.column]):
+                    return movement_coordinates
+
+        if self.kernel.size > 0:
+            movement_coordinates = self.kernel[np.random.choice(self.kernel.shape[0])]
+        
+        return movement_coordinates
+

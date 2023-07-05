@@ -1,8 +1,7 @@
 import numpy as np
 from collections import defaultdict
-
-from Model.Creatures import Erbast, Vegetob, Carviz
-
+import random, statistics
+from Model.Creatures import Vegetob, Erbast
 
 class Cell:
     def __init__(self, row, column, terrainType, vegetob):
@@ -43,7 +42,7 @@ class Cell:
         if self.terrainType == "Ground":
             return f"({self.row}, {self.column}, {self.terrainType}, {self.vegetob.density}, {self.erbast}, {self.pride})"
         else:
-            return f"({self.row}, {self.column}, {self.terrainType}, {self.vegetob}, {self.erbast}, {self.pride})"
+            return f"({self.row}, {self.column}, {self.terrainType}, {self.vegetob}, erbast: {self.erbast}, carviz: {self.pride})"
 
     def __repr__(self):
         return self.__str__()
@@ -56,93 +55,66 @@ class Herd(list):
         self.row = row
         self.column = column
 
-    # evaluates movement or stay based on four parameters
-    # 1. Is it alone or in a herd?
-    # 2. Is carviz on the same cell?
-    # 3. Does the cell has vegetob?
-    # 4. What is the average energy?
-
     def averageEnergy(self):
-        cumulativeEnergy = 0
-        for erb in self:
-            cumulativeEnergy += erb.energy
-        return int(cumulativeEnergy / len(self))
+        totalEnergy = sum(erb.energy for erb in self)
+        return int(totalEnergy / len(self))
 
     def herdDecision(self, cellsList):
-
-        foodGroup = []
-        findHerdGroup = []
-        randomMovementGroup = []
-
         population = cellsList[self.row][self.column].lenOfErbast()
-        movementCoords = np.array([self.row, self.column])
 
-        print(population, "population")
+        herd_coords = np.array([self.row, self.column])
+
         for erbast in self:
-
-            if population == 100:
-                populationInvers = 1
-            else:
-                populationInvers = 100 - population
+            populationInvers = 100 - population if population != 100 else 1
             socialAttitude = populationInvers * erbast.energy / 100
 
             movementCoords = erbast.decideMovement(cellsList, socialAttitude >= 50)
 
-            grazeCoords = np.array([self.row, self.column])
-
-            if movementCoords[0] == grazeCoords[0] and movementCoords[1] == grazeCoords[1]:
+            if np.array_equal(movementCoords, herd_coords):
                 erbast.hasMoved = False
             else:
-                if movementCoords[0] == erbast.findHerd(cellsList)[0] and movementCoords[1] == \
-                        erbast.findHerd(cellsList)[1]:
+                if np.array_equal(movementCoords, erbast.findHerd(cellsList)):
                     erbast.move(cellsList, movementCoords)
-                elif movementCoords[0] == erbast.findFood(cellsList)[0] and movementCoords[1] == \
-                        erbast.findFood(cellsList)[1]:
+                elif np.array_equal(movementCoords, erbast.findFood(cellsList)):
                     erbast.move(cellsList, movementCoords)
                 else:
                     erbast.move(cellsList, movementCoords)
 
-
-
     def herdMove(self, group, listOfCells, coordinates):
-        if len(group) > 0:
-            for erb in group:
-                erb.move(listOfCells, coordinates)
+        for erb in group:
+            erb.move(listOfCells, coordinates)
 
-    # TODO: decrease @soc_attitude
     def herdGraze(self, listOfCells):
-
         startvingErbasts = []
-        i = 0
-        for erb in self:
+        for erb_idx, erb in enumerate(self):
             if erb.energy <= 40 and not erb.hasMoved:
-                startvingErbasts.append(i)
-            i += 1
+                startvingErbasts.append(erb_idx)
 
-        energyToEat = 0
         population = listOfCells[self.row][self.column].lenOfErbast()
+        vegetob_density = listOfCells[self.row][self.column].vegetob.density
 
         if len(startvingErbasts) >= 1:
-            energyToEat = listOfCells[self.row][self.column].vegetob.density / len(startvingErbasts)
-
+            energyToEat = vegetob_density / len(startvingErbasts)
         else:
-            energyToEat = listOfCells[self.row][self.column].vegetob.density / population
+            energyToEat = vegetob_density / population
 
-        if len(startvingErbasts) < listOfCells[self.row][self.column].vegetob.density:
-            for erb in range(len(startvingErbasts)):
-                listOfCells[self.row][self.column].erbast[erb].graze(listOfCells, energyToEat)
+        erbasts_in_cell = listOfCells[self.row][self.column].erbast
 
-        elif len(startvingErbasts) > listOfCells[self.row][self.column].vegetob.density:
-            for erb in range(int(listOfCells[self.row][self.column].vegetob.density)):
-                listOfCells[self.row][self.column].erbast[erb].graze(listOfCells, energyToEat)
+        if len(startvingErbasts) < vegetob_density:
+            for erb_idx in startvingErbasts:
+                if erb_idx < len(erbasts_in_cell):
+                    erbasts_in_cell[erb_idx].graze(listOfCells, energyToEat)
+
+        elif len(startvingErbasts) > vegetob_density:
+            for erb_idx in range(vegetob_density):
+                if erb_idx < len(erbasts_in_cell):
+                    erbasts_in_cell[erb_idx].graze(listOfCells, energyToEat)
         else:
             for erb in self:
                 erb.graze(listOfCells, energyToEat)
 
     def groupAging(self):
-        for erbast in self:
-            erbast.aging(self)
-
+        [erb.aging(self) for erb in self]
 
 class Pride(list):
 
@@ -152,78 +124,63 @@ class Pride(list):
         self.column = column
 
     def calculate_social_attitude(self, pride_obj, cellsList):
-        social_attitudes = []
-        for carviz in pride_obj:
-            population = cellsList[carviz.row][carviz.column].lenOfCarviz()
-            population_invers = 100 - population if population != 100 else 1
-            social_attitude = population_invers * carviz.energy / 100
-            social_attitudes.append(social_attitude)
+        social_attitudes = [
+            (100 - cellsList[carviz.row][carviz.column].lenOfCarviz()) * carviz.energy / 100
+            if cellsList[carviz.row][carviz.column].lenOfCarviz() != 100 else carviz.energy / 100
+            for carviz in pride_obj
+        ]
         return social_attitudes
 
     def fight_between_prides(self, carviz_list, cellsList):
-
         prides = self.group_carviz_into_prides(carviz_list)
 
         if len(prides) < 2:
             return prides
-        # The rest of the fight_between_prides function remains the same.
 
         # Calculate the median social attitude of each pride
-        median_social_attitudes = [np.median(self.calculate_social_attitude(pride, cellsList)) for pride in prides]
+        median_social_attitudes = [statistics.median(self.calculate_social_attitude(pride, cellsList)) for pride in prides]
 
         # Find the pride with the lowest median social attitude
-        lowest_median_social_attitude_index = np.argmin(median_social_attitudes)
+        lowest_median_social_attitude_index = median_social_attitudes.index(min(median_social_attitudes))
         lowest_median_social_attitude_pride = prides[lowest_median_social_attitude_index]
 
         # Find the pride with the lowest number of carviz
         num_carviz = [len(pride) for pride in prides]
-        smallest_pride_index = np.argmin(num_carviz)
+        smallest_pride_index = num_carviz.index(min(num_carviz))
         smallest_pride = prides[smallest_pride_index]
 
-        # Calculate the winning probabilities based on the energy of their components
-        energy_prides = [sum(carviz.energy for carviz in pride) for pride in prides]
-        winning_probabilities = [energy / sum(energy_prides) for energy in energy_prides]
-
         # Perform the fight
-        winner_index = np.random.choice(len(prides), p=winning_probabilities)
+        winner_index = random.choices(range(len(prides)), k=1)[0]
         loser_index = 1 - winner_index
-        # Remove the losing pride
-        prides.pop(loser_index)
+
+        # Create a new list excluding the losing pride
+        remaining_prides = [pride for i, pride in enumerate(prides) if i != loser_index]
 
         # Check if the remaining prides decide to join
-        remaining_prides = len(prides)
-        if remaining_prides > 1:
-            median_social_attitudes = [np.median(self.calculate_social_attitude(pride, cellsList)) for pride in prides]
+        if len(remaining_prides) > 1:
+            median_social_attitudes = [statistics.median(self.calculate_social_attitude(pride, cellsList)) for pride in remaining_prides]
             # You can adjust this threshold according to your desired condition to join prides
             join_threshold = 10
             if all(median_social_attitude >= join_threshold for median_social_attitude in median_social_attitudes):
                 # Join the prides
                 joined_pride = Pride(0, 0)  # Use appropriate row and column values
-                for pride in prides:
+                for pride in remaining_prides:
                     joined_pride.extend(pride)
-                prides = [joined_pride]
+                remaining_prides = [joined_pride]
+
         newPride = Pride(self.row, self.column)
-        newPride.append(prides)
+        newPride.extend(remaining_prides)
         return newPride
 
     def averageEnergy(self):
-        cumulativeEnergy = 0
-        for erb in self:
-            cumulativeEnergy += erb.energy
-        return int(cumulativeEnergy / len(self))
+        total_energy = sum(erb.energy for erb in self)
+        return int(total_energy / len(self))
 
     def prideDecision(self, cellsList):
-
-        foodGroup = []
-        findHerdGroup = []
-        randomMovementGroup = []
-
         population = cellsList[self.row][self.column].lenOfErbast()
         movementCoords = np.array([self.row, self.column])
 
-
         for carv in self:
-
             if population == 100:
                 populationInvers = 1
             else:
@@ -231,46 +188,41 @@ class Pride(list):
             socialAttitude = populationInvers * carv.energy / 100
 
             movementCoords = carv.decideMovement(cellsList, socialAttitude >= 50)
-
             grazeCoords = np.array([self.row, self.column])
 
-            if movementCoords[0] == grazeCoords[0] and movementCoords[1] == grazeCoords[1]:
+            if np.array_equal(movementCoords, grazeCoords):
                 carv.hasMoved = False
             else:
-                if movementCoords[0] == carv.findHerd(cellsList)[0] and movementCoords[1] == \
-                        carv.findHerd(cellsList)[1]:
+                herdCoords = carv.findHerd(cellsList)
+                trackCoords = carv.trackHerd(cellsList)
+
+                if np.array_equal(movementCoords, herdCoords):
                     carv.move(cellsList, movementCoords)
-                elif movementCoords[0] == carv.trackHerd(cellsList)[0] and movementCoords[1] == \
-                        carv.trackHerd(cellsList)[1]:
+                elif np.array_equal(movementCoords, trackCoords):
                     carv.move(cellsList, movementCoords)
                 else:
                     carv.move(cellsList, movementCoords)
 
-
-
     def prideMove(self, group, listOfCells, coordinates):
-        if len(group) > 0:
-            for erb in group:
-                erb.move(listOfCells, coordinates)
+        [erb.move(listOfCells, coordinates) for erb in group if len(group) > 0]
 
-    # TODO: adjust
     def prideGraze(self, listOfCells):
         a = None
-        lowestEnergy = 0
+        lowestEnergy = float('inf')  # Initialize with a high value
         for erb in self:
-            if lowestEnergy <= erb.energy:
+            if erb.energy < lowestEnergy:
                 a = erb
-        a.hunt(listOfCells)
+                lowestEnergy = erb.energy
+        if a is not None:
+            a.hunt(listOfCells)
 
     def groupAging(self):
         for carv in self:
             carv.aging(self)
 
     def group_carviz_into_prides(self, carviz_list):
-        prides_dict = {}
+        prides_dict = defaultdict(lambda: Pride(0, 0))
         for carviz in carviz_list:
-            if carviz.previouslyVisited not in prides_dict:
-                prides_dict[carviz.previouslyVisited] = Pride(carviz.row, carviz.column)
             prides_dict[carviz.previouslyVisited].append(carviz)
 
         prides = list(prides_dict.values())
