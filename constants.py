@@ -20,6 +20,7 @@ NUM_CELLS = 50       # size of the (square) grid (NUMCELLS x NUMCELLS)
 
 MAX_LIFE_C = 10
 MAX_LIFE_E = 10
+INTERVAL = 60
 
 # geometry
 NUMCELLS_R = 1000    # number of rows of the (potentially non-square) grid
