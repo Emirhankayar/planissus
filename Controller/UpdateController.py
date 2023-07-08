@@ -10,12 +10,10 @@ from matplotlib import colors
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import Slider, Button
 from Model.WorldModel import Cell
-from constants import NUM_CELLS, MAX_DAYS, MAX_LIFE_E, MAX_LIFE_C, INTERVAL
+from constants import NUM_CELLS, MAX_DAYS, MAX_LIFE_E, MAX_LIFE_C, GREEN, YELLOW, RED, RESET
 from Model.Creatures import Vegetob, Carviz, Erbast, Creatures
 
-
-# 8) Fix total carv and total erb, FIX INTERVAL ?!?
-# 9) Fix the carviz water bug
+# 9) FIX INTERVAL
 # 10) Optimise
 
 # Set TkAgg backend
@@ -27,30 +25,25 @@ class SimulationInterface:
         self.erb_lifetime = MAX_LIFE_E
         self.car_lifetime = MAX_LIFE_C
         self.num_cells = NUM_CELLS
-        self.interval = INTERVAL
-        
-        
         self.day = 0
         self.erb_counter = 0
         self.car_counter = 0
         self.hunt_counter = 0
-
         self.x_data = [0]
-
         self.y_erb_data = [self.erb_counter]
         self.y_car_data = [self.car_counter]
         self.y_hunt_data = [self.hunt_counter]
-
         self.pop_erb = [self.y_erb_data]
         self.pop_car = [self.y_car_data]
-
+        self.erb_mean = 0
+        self.car_mean = 0
         self.car_max = 0
         self.erb_max = 0
         self.hunt_tot = 0
-        
         self.num_car = 10
         self.num_erb = 20
-        self.water_scale = 5
+        self.water_scale = 15
+        self.run_flag = 0
         self.has_started = False
         self.cellsList = np.empty((self.num_cells, self.num_cells), dtype=object)
         self.water_cells = np.zeros((self.num_cells, self.num_cells), dtype=bool)
@@ -59,14 +52,11 @@ class SimulationInterface:
         self.setup_sliders()
         self.setup_buttons()
         self.button_events()
-
         self.im = self.ax1.imshow(self.colorsList, cmap=self.cmap, norm=self.norm)
-
-        self.animation = None
         self.animation_paused = True
+        self.interval = 60
+        self.animation = None
         self.initialize_animation()
-        self.run_flag = 0
-        self.has_fin = False
 
     def setup_animation_values(self):
 
@@ -77,6 +67,7 @@ class SimulationInterface:
         self.num_erb = self.slider5.val
         self.erb_lifetime = self.slider6.val
         self.water_scale = self.slider7.val
+
         self.get_init_values()
 
         self.cellsList = np.empty((self.num_cells, self.num_cells), dtype=object)
@@ -111,10 +102,12 @@ class SimulationInterface:
         self.slider1 = Slider(self.slider1_ax, 'Animation Speed', 0, 500, valinit=60, valstep=10)
         self.slider2 = Slider(self.slider2_ax, 'Number Cells', 50, 100, valinit=50, valstep=10)
         self.slider3 = Slider(self.slider3_ax, 'Carviz Pop', 10, 500, valinit=10, valstep=1)
-        self.slider4 = Slider(self.slider4_ax, 'Carviz Life', 10, 1000, valinit=10, valstep=1)
+        self.slider4 = Slider(self.slider4_ax, 'Carviz Life', 10, 500, valinit=10, valstep=1)
         self.slider5 = Slider(self.slider5_ax, 'Erbast Pop', 10, 500, valinit=10, valstep=1)
-        self.slider6 = Slider(self.slider6_ax, 'Erbast Life', 10, 1000, valinit=10, valstep=1)
-        self.slider7 = Slider(self.slider7_ax, 'Water Amount', 1, 20, valinit=15, valstep=5)
+        self.slider6 = Slider(self.slider6_ax, 'Erbast Life', 10, 500, valinit=10, valstep=1)
+        self.slider7 = Slider(self.slider7_ax, 'Water Amount', 1e-6, 20, valinit=15, valstep=5)
+        
+
 
     def setup_buttons(self):
         # Create buttons
@@ -136,7 +129,6 @@ class SimulationInterface:
         creatures = Creatures()
         creatures.update_num_cells(self.num_cells)
         scale = self.water_scale
-
         for i in range(self.num_cells):
             for j in range(self.num_cells):
                 noise_value = noise.pnoise2(i / scale, j / scale, octaves=6, persistence=0.5, lacunarity=2.0,
@@ -162,7 +154,6 @@ class SimulationInterface:
                         self.cellsList[i][j] = Cell(i, j, "Water", None)
 
     def simulate(self):
-
         for sublist in self.cellsList:
             for veg in sublist:
                 if veg.terrainType != "Water":  # Exclude water cells from growth
@@ -201,42 +192,42 @@ class SimulationInterface:
         for row in range(self.num_cells):
             for column in range(self.num_cells):
                 if (
-                        row < len(self.cellsList)
-                        and column < len(self.cellsList[row])
-                        and len(self.cellsList[row][column].erbast) > 0
-                        and len(self.cellsList[row][column].pride) > 0
+                    row < len(self.cellsList)
+                    and column < len(self.cellsList[row])
+                    and self.cellsList[row][column].terrainType == "Water"
+                ):
+                    self.colorsList[row][column] = 5
+                elif (
+                    row < len(self.cellsList)
+                    and column < len(self.cellsList[row])
+                    and len(self.cellsList[row][column].erbast) > 0
+                    and len(self.cellsList[row][column].pride) > 0
                 ):
                     self.car_counter += 1
                     self.erb_counter += 1
                     self.hunt_counter += 1
-
                     self.colorsList[row][column] = 45
                 elif (
-                        row < len(self.cellsList)
-                        and column < len(self.cellsList[row])
-                        and len(self.cellsList[row][column].erbast) > 0
+                    row < len(self.cellsList)
+                    and column < len(self.cellsList[row])
+                    and len(self.cellsList[row][column].erbast) > 0
                 ):
                     self.erb_counter += 1
                     self.colorsList[row][column] = 25
                 elif (
-                        row < len(self.cellsList)
-                        and column < len(self.cellsList[row])
-                        and len(self.cellsList[row][column].pride) > 0
+                    row < len(self.cellsList)
+                    and column < len(self.cellsList[row])
+                    and len(self.cellsList[row][column].pride) > 0
                 ):
                     self.colorsList[row][column] = 35
                     self.car_counter += 1
                 elif (
-                        row < len(self.cellsList)
-                        and column < len(self.cellsList[row])
-                        and self.cellsList[row][column].terrainType == "Ground"
+                    row < len(self.cellsList)
+                    and column < len(self.cellsList[row])
+                    and self.cellsList[row][column].terrainType == "Ground"
                 ):
                     self.colorsList[row][column] = 15
-                elif (
-                        row < len(self.cellsList)
-                        and column < len(self.cellsList[row])
-                        and self.cellsList[row][column].terrainType == "Water"
-                ):
-                    self.colorsList[row][column] = 5
+
 
     def update(self, frame):
         if self.has_started:
@@ -294,11 +285,7 @@ class SimulationInterface:
             self.erb_max = max(self.y_erb_data)
             self.car_max = max(self.y_car_data)
 
-            self.erb_tot = sum(self.y_erb_data)
-            self.car_tot = sum(self.y_car_data)
-
             self.hunt_tot = sum(self.y_hunt_data)
-            
             
             self.ax2.set_xlabel('Days', fontsize=8)
             self.ax2.set_ylabel('Population', fontsize=8)
@@ -307,25 +294,52 @@ class SimulationInterface:
                 f'\n\n Max Carviz: {self.car_max}      Max Erbast: {self.erb_max}      Cur Carviz: {self.car_counter}      Cur Erbast: {self.erb_counter}      Tot Kills: {self.hunt_tot}'))
             self.ax2.title.set_fontsize(8)
             
+            # Calculate the sum of erb_pop and car_pop for the current day
+            erb_pop_sum = sum(new_erb_pop)
+            car_pop_sum = sum(new_car_pop)
+
+            # Update erb_tot and car_tot with the sum of populations
+            if self.pop_erb:
+                self.erb_tot = sum(self.pop_erb[-1]) + erb_pop_sum
+            else:
+                self.erb_tot = erb_pop_sum
+
+            if self.pop_car:
+                self.car_tot = sum(self.pop_car[-1]) + car_pop_sum
+            else:
+                self.car_tot = car_pop_sum
+
+
+            # Calculate the mean of erb_pop and car_pop
+            erb_mean = round(self.erb_tot / len(self.pop_erb), 2)
+            car_mean = round(self.car_tot / len(self.pop_car), 2)
+
+            # Update erb_mean and car_mean
+            self.erb_mean = erb_mean
+            self.car_mean = car_mean
 
             if self.day >= 0 and self.car_counter == 0:
+                print(f"\n{GREEN}Simulation Successfully Finished!\n{RESET}")
+
                 self.run_flag += 1
                 time.sleep(0.1)
                 self.animation.event_source.stop()  # Stop the animation 
                 if self.erb_counter > 0:
-                    print("Erbasts survived!")
+                    print(f"{YELLOW}Erbasts Survived!{RESET}\n")
+
+                if self.erb_counter == 0:
+                    print(f"{RED}Carvizes Survived!{RESET}\n")
+
                 self.get_final_values()
                 self.save_simulation_data()
                 self.read_pickle_file('simulation_data.pickle')
-        
+
             return self.im, self.line_erb, self.line_car
 
     def initialize_animation(self):
-        interval = 60
         self.animation = FuncAnimation(
-            self.fig, self.update, interval=interval, save_count=200
+            self.fig, self.update, interval=self.interval, save_count=200
         )
-        print(1, interval)
         self.animation.pause()  # Pause the animation initially
 
     def start_animation(self, event=None):
@@ -340,9 +354,10 @@ class SimulationInterface:
         self.y_hunt_data = [self.hunt_counter]
         self.pop_erb = [self.y_erb_data]
         self.pop_car = [self.y_car_data]
+        self.interval = self.slider1.val
+
         self.setup_animation_values()
-        interval = self.interval
-    
+        
         self.initialize_cells_list()
 
         self.has_started = True
@@ -355,8 +370,8 @@ class SimulationInterface:
             self.animate()
 
             if self.animation is None:
-                self.animation = FuncAnimation(self.fig, self.update, interval=interval, save_count=200)
-                print(2, interval)
+                print(2, self.interval)
+                self.animation = FuncAnimation(self.fig, self.update, interval=self.interval, save_count=200)
                 self.animation.event_source.start()
 
             # Disable the "Start" button
@@ -399,9 +414,9 @@ class SimulationInterface:
                     column = random.randint(0, self.num_cells - 1)
 
                     if (
-                        row < self.num_cells and column < self.num_cells
-                        and row < len(self.cellsList) and column < len(self.cellsList[row])
-                        and self.cellsList[row][column].terrainType != "Water"
+                            row < self.num_cells and column < self.num_cells
+                            and row < len(self.cellsList) and column < len(self.cellsList[row])
+                            and self.cellsList[row][column].terrainType != "Water"
                     ):
                         carv.row = row
                         carv.column = column
@@ -427,24 +442,27 @@ class SimulationInterface:
 
     def get_init_values(self):
         init_values = {
-            'interval'    : self.slider1.val,
-            'num_cells'   : self.slider2.val,
-            'num_car'     : self.slider3.val,
-            'car_lifetime': self.slider4.val,
-            'num_erb'     : self.slider5.val,
-            'erb_lifetime': self.slider6.val,
-            'water_scale' : self.slider7.val
+            'Interval    '  : self.slider1.val,
+            'NUM_Cells   '  : self.slider2.val,
+            'NUM_Carviz  '  : self.slider3.val,
+            'NUM_Erbast  '  : self.slider5.val,
+            'LFT_Carviz  '  : self.slider4.val,
+            'LFT_Erbast  '  : self.slider6.val,
+            'SCL_Water   '  : int(self.slider7.val)
         }
         return init_values
 
     def get_final_values(self):
         final_values = {
-            'run_amount'  : self.run_flag,
-            'tot_carv'    : self.car_tot,
-            'tot_erb'     : self.erb_tot,
-            'max_carviz'  : self.car_max,
-            'max_erbast'  : self.erb_max,
-            'tot_kills'   : self.hunt_tot
+            'RUN_Amount  '  : self.run_flag,
+            'RUN_Time    '  : self.title,
+            'MAX_Carviz  '  : self.car_max,
+            'MAX_Erbast  '  : self.erb_max,
+            'MEAN_Carviz '  : self.car_mean,
+            'MEAN_Erbast '  : self.erb_mean,
+            'TOT_Carviz  '  : self.car_tot,
+            'TOT_Erbast  '  : self.erb_tot,
+            'TOT_Kills   '  : self.hunt_tot,
         }
         return final_values
     
@@ -476,7 +494,7 @@ class SimulationInterface:
         with open('simulation_data.pickle', 'wb') as file:
             pickle.dump(updated_values, file)
 
-        print("Simulation data saved successfully.\n")
+        print(f"{GREEN}Simulation data saved successfully.{RESET}\n")
 
     def read_pickle_file(self, file_path):
         with open(file_path, 'rb') as file:
@@ -484,8 +502,9 @@ class SimulationInterface:
             self.content = data
 
         for title, content in self.content.items():
-            print(title + ":")
-            print(content)
+            print(f"\n{RESET}{title}\n")
+            for key, value in content.items():
+                print(f"{key}: {value}")
             print()
 
 if __name__ == '__main__':
