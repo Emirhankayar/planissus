@@ -1,9 +1,7 @@
-# TODO change built-in python methods to numpy, and replace list with numpy arrays (use max_herd, etc.)
+from matplotlib import pyplot as plt
+from View.SimulationView import SimulationView
 
-# TODO implement proper MVC pattern
-
-# TODO representation: cells inspection, logs and replay
-
-# TODO struggle + use Emir to adjust math values
-
-# TODO fix fucking carviz
+# Entry point
+if __name__ == '__main__':
+    sim = SimulationView()
+    plt.show()

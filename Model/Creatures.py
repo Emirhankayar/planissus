@@ -1,7 +1,8 @@
 import random
 import numpy as np
 
-class Creatures():
+
+class Creatures:
     NUM_CELLS = None
 
     def __init__(self):
@@ -19,12 +20,11 @@ class Creatures():
         for i in range(row - 1, row + 2):
             for j in range(col - 1, col + 2):
                 if (
-                    (i >= 0 and j >= 0 and i < max_row and j < max_col)
-                    and (i != row or j != col)
+                        (i >= 0 and j >= 0 and i < max_row and j < max_col)
+                        and (i != row or j != col)
                 ):
                     adjacent_cells.append([i, j])
         return np.array(adjacent_cells)
-
 
     @property
     def row(self):
@@ -57,6 +57,7 @@ class Vegetob(Creatures):
         self._density = int(newDensity)
 
     def generateDensity(self):
+        # TODO adjust back
         return np.random.randint(1, 100)
 
     def grow(self):
@@ -85,7 +86,7 @@ class Erbast(Creatures):
 
     def aging(self, listOfCreatures):
         self.age += 1
-        
+
         if self.energy <= 1.0:
             listOfCreatures.remove(self)
         elif self.age >= self.lifetime:
@@ -131,39 +132,38 @@ class Erbast(Creatures):
         erb2.row, erb2.column = self.row, self.column
         listOfCreatures.extend([erb1, erb2])
 
-
     def findHerd(self, listOfHerds):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
         maxErbast = 0
         maxErbastCells = []
-        
+
         for kernel_row, kernel_col in self.kernel:
             if listOfHerds[kernel_row][kernel_col].terrainType == "Ground":
                 lenOfErbast = listOfHerds[kernel_row][kernel_col].lenOfErbast()
-                
+
                 if lenOfErbast > maxErbast:
                     maxErbast = lenOfErbast
                     maxErbastCells = [(kernel_row, kernel_col)]
                 elif lenOfErbast == maxErbast:
                     maxErbastCells.append((kernel_row, kernel_col))
-        
+
         return np.array(random.choice(maxErbastCells)) if maxErbastCells else np.array([self.row, self.column])
 
     def findFood(self, listOfVegetobs):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
         maxDensity = 0
         maxDensityCells = []
-        
+
         for kernel_row, kernel_col in self.kernel:
             if listOfVegetobs[kernel_row][kernel_col].terrainType == "Ground":
                 density = listOfVegetobs[kernel_row][kernel_col].vegetob.density
-                
+
                 if density > maxDensity:
                     maxDensity = density
                     maxDensityCells = [(kernel_row, kernel_col)]
                 elif density == maxDensity:
                     maxDensityCells.append((kernel_row, kernel_col))
-        
+
         return np.array(random.choice(maxDensityCells)) if maxDensityCells else np.array([self.row, self.column])
 
     def changeSocAttitude(self):
@@ -175,25 +175,25 @@ class Erbast(Creatures):
     def move(self, listOfVegetobs, coordinates):
         oldRow, oldCol = self.row, self.column
         newRow, newCol = coordinates
-        
+
         oldCell = listOfVegetobs[oldRow][oldCol]
         newCell = listOfVegetobs[newRow][newCol]
-        
+
         oldCell.erbast.remove(self)
         newCell.erbast.append(self)
-        
+
         self.row, self.column = newRow, newCol
         self.energy -= 1
-
 
     def graze(self, listOfVegetobs, amountToEat):
         energyLimit = 100 - self.energy
         energyToEat = min(energyLimit, amountToEat)
-        
+
         self.energy += energyToEat
         listOfVegetobs[self.row][self.column].vegetob.density -= energyToEat
-        
+
         self.changeSocAttitude()
+
 
 class Carviz(Creatures):
 
@@ -225,7 +225,7 @@ class Carviz(Creatures):
 
     def aging(self, listOfCreatures):
         self.age += 1
-        
+
         if self.energy <= 1.0:
             listOfCreatures.remove(self)
         elif self.age >= self.lifetime:
@@ -267,7 +267,6 @@ class Carviz(Creatures):
 
         return np.array(random.choice(maxErbastCells)) if maxErbastCells else np.array([self.row, self.column])
 
-
     def findPride(self, listOfPrides):
         self.kernel = self.get_adjacent_cells(self.row, self.column)
         pride = listOfPrides[self.row][self.column]
@@ -297,7 +296,6 @@ class Carviz(Creatures):
         row, column = max(self.kernel, key=density_key)
         return np.array([row, column])
 
-
     def move(self, listOfVegetobs, coordinates):
         oldRow, oldCol = self.row, self.column
         self.previous_position = (oldRow, oldCol)  # Save the previous position
@@ -309,16 +307,14 @@ class Carviz(Creatures):
 
         self.energy -= 1
 
-
-
     def hunt(self, listOfVegetobs):
         erbast = listOfVegetobs[self.row][self.column].erbast
         erbSwap = max(erbast, key=lambda erb: erb.energy, default=None)
-        
+
         if erbSwap is not None:
             maxEnergy = erbSwap.energy
             energy_to_eat = min(100 - self.energy, maxEnergy)
-            
+
             # Update the energy levels of the creature and plant
             self.energy += energy_to_eat
             erbast.remove(erbSwap)
@@ -347,6 +343,5 @@ class Carviz(Creatures):
 
         if self.kernel.size > 0:
             movement_coordinates = self.kernel[np.random.choice(self.kernel.shape[0])]
-        
-        return movement_coordinates
 
+        return movement_coordinates
