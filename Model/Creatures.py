@@ -3,6 +3,7 @@ import numpy as np
 
 
 class Creatures:
+<<<<<<< HEAD
 
     """
     This class is a parent class to Erbast and Carviz,
@@ -10,6 +11,8 @@ class Creatures:
     kernel is used to be later filled with get_adjacent_cells() method.
     """
 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
     NUM_CELLS = None
 
     def __init__(self):
@@ -111,9 +114,13 @@ class Vegetob(Creatures):
         self._density = int(newDensity)
 
     def generateDensity(self):
+<<<<<<< HEAD
         """
         :return: random int value betwen 1 and 100
         """
+=======
+        # TODO adjust back
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         return np.random.randint(1, 100)
 
     def grow(self):
@@ -315,6 +322,11 @@ class Erbast(Creatures):
         self.energy += energyToEat
         listOfVegetobs[self.row][self.column].vegetob.density -= energyToEat
 
+<<<<<<< HEAD
+=======
+        self.changeSocAttitude()
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
+
 
 class Carviz(Creatures):
 
@@ -473,7 +485,6 @@ class Carviz(Creatures):
         return np.array([row, column])
 
 
-
     def move(self, listOfVegetobs, coordinates):
 
         """
@@ -551,4 +562,8 @@ class Carviz(Creatures):
         if self.kernel.size > 0:
             movement_coordinates = self.kernel[np.random.choice(self.kernel.shape[0])]
 
+<<<<<<< HEAD
         return movement_coordinates
+=======
+        return movement_coordinates
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d

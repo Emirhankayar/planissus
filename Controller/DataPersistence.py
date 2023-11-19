@@ -1,8 +1,17 @@
+<<<<<<< HEAD
+=======
+import sys 
+sys.path.append(".")
+
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 from constants import GREEN, RESET
 import pickle
 
 class DataPersistence:
+<<<<<<< HEAD
 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
     def __init__(self,
                  interval,
                  num_cells,
@@ -17,6 +26,7 @@ class DataPersistence:
                  erb_max,
                  hunt_tot
                  ):
+<<<<<<< HEAD
         """
         The init method simply takes the fields that are needed to be saved
 
@@ -33,6 +43,8 @@ class DataPersistence:
         :param erb_max:
         :param hunt_tot:
         """
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 
         self.interval = interval
         self.num_cells = num_cells
@@ -47,6 +59,7 @@ class DataPersistence:
         self.erb_max = erb_max
         self.hunt_tot = hunt_tot
 
+<<<<<<< HEAD
 
     def get_init_values(self):
         """
@@ -56,6 +69,12 @@ class DataPersistence:
         init_values = {
             'Interval    ': self.interval ,
             'NUM_Cells   ': self.num_cells,
+=======
+    def get_init_values(self):
+        init_values = {
+            'Interval    ': self.interval,
+            'NUM_Cells   ': f"{self.num_cells} x {self.num_cells}",
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
             'NUM_Carviz  ': self.num_carviz,
             'NUM_Erbast  ': self.num_erbast,
             'LFT_Carviz  ': self.lft_carviz,
@@ -65,12 +84,15 @@ class DataPersistence:
         return init_values
 
     def get_final_values(self):
+<<<<<<< HEAD
 
         """
         final_values is a dictionary of values that are saved when the simulation has ended.
         :return:
         """
 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         final_values = {
             'RUN_Amount  ': self.run_flag,
             'RUN_Time    ': self.title,
@@ -81,12 +103,15 @@ class DataPersistence:
         return final_values
 
     def save_simulation_data(self):
+<<<<<<< HEAD
         """
         The method uses the pickle module to serialize and deserialize the data.
         After saving the data, it prints a success message in green color.
         :return:
         """
 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         # Get the initial and final values
         init_values = self.get_init_values()
         final_values = self.get_final_values()
@@ -117,6 +142,7 @@ class DataPersistence:
         print(f"{GREEN}Simulation data saved successfully.{RESET}\n")
 
     def read_pickle_file(self, file_path):
+<<<<<<< HEAD
 
         """
         This method reads the content of a pickle file given its file path and prints it.
@@ -125,6 +151,8 @@ class DataPersistence:
         :return:
         """
 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         with open(file_path, 'rb') as file:
             data = pickle.load(file)
             self.content = data
@@ -133,4 +161,8 @@ class DataPersistence:
             print(f"\n{RESET}{title}\n")
             for key, value in content.items():
                 print(f"{key}: {value}")
+<<<<<<< HEAD
             print()
+=======
+            print()
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d

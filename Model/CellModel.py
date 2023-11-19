@@ -1,8 +1,15 @@
+<<<<<<< HEAD
+=======
+import sys
+sys.path.append(".")
+from Model.Creatures import Vegetob
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 from Model.Herd import Herd
 from Model.Pride import Pride
 
 
 class Cell:
+<<<<<<< HEAD
 
     """
     class Cell is a base unit of the world in Planissus world simulation.
@@ -19,6 +26,9 @@ class Cell:
         :param terrainType:
         :param vegetob:
         """
+=======
+    def __init__(self, row, column, terrainType, vegetob):
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         self.row = row
         self.column = column
         self.terrainType = terrainType
@@ -27,6 +37,7 @@ class Cell:
         self.pride = Pride(row, column)
 
     def lenOfErbast(self):
+<<<<<<< HEAD
         """
         :return: amount of all erbast on this cell
         """
@@ -45,10 +56,23 @@ class Cell:
         """
         :return: amount of all Carviz on this cell
         """
+=======
+        amountOfErbast = len(self.erbast)
+        return amountOfErbast
+
+    def appendErbast(self, erb):
+        self.erbast.append(erb)
+
+    def delErbast(self, erb):
+        self.erbast.remove(erb)
+
+    def lenOfCarviz(self):
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         amountOfCarviz = len(self.pride)
         return amountOfCarviz
 
     def appendPride(self, pride):
+<<<<<<< HEAD
         """
         Appends a list of Carviz to the cell
         :param pride:
@@ -81,6 +105,21 @@ class Cell:
         :return:
         """
 
+=======
+        self.pride.append(pride)
+
+    def delPride(self, pride):
+        self.pride.remove(pride)
+
+    def genVegetob(self):
+        if self.terrainType == "Ground":
+            return Vegetob()
+        else:
+            return "Water"
+
+    def death_from_vegetob(self, listOfVegetobs):
+
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         vegetob_full_density_counter = 0
 
         if self.erbast:
@@ -117,8 +156,13 @@ class Cell:
     def __str__(self):
         if self.terrainType == "Ground":
             return f"({self.row}, {self.column}, {self.terrainType}, {self.vegetob.density}, {self.erbast}, {self.pride})"
+<<<<<<< HEAD
 
         return f"({self.row}, {self.column}, {self.terrainType}, {self.vegetob}, erbast: {self.erbast}, carviz: {self.pride})"
+=======
+        else:
+            return f"({self.row}, {self.column}, {self.terrainType}, {self.vegetob}, erbast: {self.erbast}, carviz: {self.pride})"
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 
     def __repr__(self):
         return self.__str__()

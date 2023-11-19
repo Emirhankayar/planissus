@@ -1,9 +1,16 @@
+<<<<<<< HEAD
 ## In your environment
 ## pip install -r requirements.txt 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 contourpy==1.1.0
 cycler==0.11.0
 fonttools==4.41.0
 kiwisolver==1.4.4
+<<<<<<< HEAD
+=======
+matplotlib==3.7.2
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 noise==1.2.2
 numpy==1.25.1
 packaging==23.1
@@ -11,4 +18,7 @@ Pillow==10.0.0
 pyparsing==3.0.9
 python-dateutil==2.8.2
 six==1.16.0
+<<<<<<< HEAD
 matplotlib==3.7.2
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d

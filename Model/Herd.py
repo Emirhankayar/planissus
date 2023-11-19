@@ -2,15 +2,19 @@ import numpy as np
 
 
 class Herd(list):
+<<<<<<< HEAD
     """
     This class is inherited from a python list and stores an list of Erbast on the same cell.
     """
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 
     def __init__(self, row, column):
         super().__init__()
         self.row = row
         self.column = column
 
+<<<<<<< HEAD
     def herdDecision(self, cellsList):
 
         """
@@ -23,6 +27,13 @@ class Herd(list):
         :return:
         """
 
+=======
+    def averageEnergy(self):
+        totalEnergy = sum(erb.energy for erb in self)
+        return int(totalEnergy / len(self))
+
+    def herdDecision(self, cellsList):
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         population = cellsList[self.row][self.column].lenOfErbast()
 
         herd_coords = np.array([self.row, self.column])
@@ -36,6 +47,7 @@ class Herd(list):
             if np.array_equal(movementCoords, herd_coords):
                 erbast.hasMoved = False
             else:
+<<<<<<< HEAD
                 erbast.move(cellsList, movementCoords)
 
 
@@ -48,6 +60,20 @@ class Herd(list):
         :return:
         """
 
+=======
+                if np.array_equal(movementCoords, erbast.findHerd(cellsList)):
+                    erbast.move(cellsList, movementCoords)
+                elif np.array_equal(movementCoords, erbast.findFood(cellsList)):
+                    erbast.move(cellsList, movementCoords)
+                else:
+                    erbast.move(cellsList, movementCoords)
+
+    def herdMove(self, group, listOfCells, coordinates):
+        for erb in group:
+            erb.move(listOfCells, coordinates)
+
+    def herdGraze(self, listOfCells):
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         startvingErbasts = []
         for erb_idx, erb in enumerate(self):
             if erb.energy <= 40 and not erb.hasMoved:
@@ -77,8 +103,12 @@ class Herd(list):
                 erb.graze(listOfCells, energyToEat)
 
     def groupAging(self):
+<<<<<<< HEAD
         """
         An interface to call aging for all erbasts on the same cell.
         :return:
         """
         [erb.aging(self) for erb in self]
+=======
+        [erb.aging(self) for erb in self]
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d

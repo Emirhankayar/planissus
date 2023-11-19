@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import statistics
 import random
 import numpy as np
@@ -9,6 +10,18 @@ class Pride(list):
     """
     This class is inherited from a python list and stores an list of Carviz on the same cell.
     """
+=======
+import sys
+sys.path.append(".")
+import statistics
+import random
+import numpy as np
+from collections import defaultdict
+
+
+
+class Pride(list):
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 
     def __init__(self, row, column):
         super().__init__()
@@ -16,6 +29,7 @@ class Pride(list):
         self.column = column
 
     def calculate_social_attitude(self, pride_obj, cellsList):
+<<<<<<< HEAD
 
         """
         This method calculates a social attitude value for each carviz in Pride.
@@ -28,6 +42,8 @@ class Pride(list):
         :return:
         """
 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         social_attitudes = [
             (100 - cellsList[carviz.row][carviz.column].lenOfCarviz()) * carviz.energy / 100
             if cellsList[carviz.row][carviz.column].lenOfCarviz() != 100 else carviz.energy / 100
@@ -36,6 +52,7 @@ class Pride(list):
         return social_attitudes
 
     def fight_between_prides(self, carviz_list, cellsList):
+<<<<<<< HEAD
 
         """
         Fight between prides is possible due to
@@ -45,6 +62,8 @@ class Pride(list):
         :param cellsList:
         :return:
         """
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         prides = self.group_carviz_into_prides(carviz_list)
 
         if len(prides) < 2:
@@ -76,7 +95,11 @@ class Pride(list):
             join_threshold = 10
             if all(median_social_attitude >= join_threshold for median_social_attitude in median_social_attitudes):
                 # Join the prides
+<<<<<<< HEAD
                 joined_pride = Pride(self.row, self.column)  # Use appropriate row and column values
+=======
+                joined_pride = Pride(0, 0)  # Use appropriate row and column values
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
                 for pride in remaining_prides:
                     joined_pride.extend(pride)
                 remaining_prides = [joined_pride]
@@ -86,6 +109,7 @@ class Pride(list):
         return newPride
 
     def averageEnergy(self):
+<<<<<<< HEAD
         """
         :return: The average energy of the pride
         """
@@ -100,6 +124,12 @@ class Pride(list):
         :return:
         """
 
+=======
+        total_energy = sum(erb.energy for erb in self)
+        return int(total_energy / len(self))
+
+    def prideDecision(self, cellsList):
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         population = cellsList[self.row][self.column].lenOfErbast()
         movementCoords = np.array([self.row, self.column])
 
@@ -116,6 +146,7 @@ class Pride(list):
             if np.array_equal(movementCoords, grazeCoords):
                 carv.hasMoved = False
             else:
+<<<<<<< HEAD
                 carv.move(cellsList, movementCoords)
 
     def prideMove(self, group, listOfCells, coordinates):
@@ -126,10 +157,28 @@ class Pride(list):
         An interface to call aging for all prides on the same cell.
         :return:
         """
+=======
+                herdCoords = carv.findHerd(cellsList)
+                trackCoords = carv.trackHerd(cellsList)
+
+                if np.array_equal(movementCoords, herdCoords):
+                    carv.move(cellsList, movementCoords)
+                elif np.array_equal(movementCoords, trackCoords):
+                    carv.move(cellsList, movementCoords)
+                else:
+                    carv.move(cellsList, movementCoords)
+
+    def prideMove(self, group, listOfCells, coordinates):
+        [erb.move(listOfCells, coordinates) for erb in group if len(group) > 0]
+
+
+    def groupAging(self):
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         for carv in self:
             carv.aging(self)
 
     def group_carviz_into_prides(self, carviz_list):
+<<<<<<< HEAD
 
         """
         This method groups carviz into different prides based on the
@@ -138,6 +187,8 @@ class Pride(list):
         :return:
         """
 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         prides_dict = defaultdict(lambda: Pride(0, 0))
         for carviz in carviz_list:
             prides_dict[carviz.previouslyVisited].append(carviz)

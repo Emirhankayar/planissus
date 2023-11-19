@@ -15,17 +15,23 @@ from Controller.DataPersistence import DataPersistence
 from Controller.SimulationController import SimulationController
 from constants import NUM_CELLS, MAX_DAYS, MAX_LIFE_E, MAX_LIFE_C, GREEN, YELLOW, RED, RESET
 
+<<<<<<< HEAD
 # Style of the visualisation
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 mplstyle.use(['fast'])
 # Set TkAgg backend
 plt.switch_backend('TkAgg')
 
 
 class SimulationView:
+<<<<<<< HEAD
     # The Data Visualisation is implemented 
     # through a View component class SimulationView. 
     # Its constructor sets up default values for the simulation,
     # such as the timer, creatures counter, etc.
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
     def __init__(self):
         self.max_days = MAX_DAYS
         self.erb_lifetime = MAX_LIFE_E
@@ -66,10 +72,13 @@ class SimulationView:
         self.initialize_animation()
 
     def setup_animation_values(self):
+<<<<<<< HEAD
         # Connect Animation values to Sliders
         # for user to interact. Initialize 2D
         # array to track water cells, for cell colors 
         # visualization, cell color display in the grid subplot.
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         self.interval = self.slider1.val
         self.num_cells = self.slider2.val
         self.num_car = self.slider3.val
@@ -85,11 +94,15 @@ class SimulationView:
         self.im = self.ax1.imshow(self.colorsList, cmap=self.cmap, norm=self.norm)
 
     def setup_plots(self):
+<<<<<<< HEAD
         # Plt style to make background in dark mode.
         plt.style.use('dark_background')
         # Create Color map to assign colours to objects.
         # Create plots and Position them
         # Create Lines to show on the graph
+=======
+        plt.style.use('dark_background')
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         self.cmap = colors.ListedColormap(['blue', 'green', 'yellow', 'red', 'black'])
         self.bounds = [0, 10, 20, 30, 40, 50]
         self.norm = colors.BoundaryNorm(self.bounds, self.cmap.N)
@@ -238,9 +251,12 @@ class SimulationView:
     #  titles, counters, datapersistence and controls
     #  the animation if it's finished or not.
         if self.has_started:
+<<<<<<< HEAD
             # Calling a simulation_controller.simulate method
             #  in order to trigger the events of the planissus world each
             #  time the animation updates.
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
             self.simulation_controller.simulate(self.cellsList)
             self.update_population_counts()
             self.day += 1
@@ -306,7 +322,11 @@ class SimulationView:
             self.ax2.set_title((
                 f'\n\n Max Carviz: {self.car_max}      Max Erbast: {self.erb_max}      Cur Carviz: {self.car_counter}      Cur Erbast: {self.erb_counter}      Tot Kills: {self.hunt_tot}'))
             self.ax2.title.set_fontsize(8)
+<<<<<<< HEAD
             # Instance of Data persistence in order to collect information
+=======
+
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
             self.dp = DataPersistence(
                 self.slider1.val,
                 self.slider2.val,
@@ -321,9 +341,14 @@ class SimulationView:
                 self.erb_max,
                 self.hunt_tot
             )
+<<<<<<< HEAD
             # Gets the initial values assigned in the beginning of a simulation
             self.dp.get_init_values()
             # If the day is greater than 0 and there exists no carviz and animation is running it stops it to indicate that it's finished
+=======
+            self.dp.get_init_values()
+
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
             if self.day >= 0 and self.car_counter == 0 and self.animation_paused == False and not self.has_finished:
                 self.has_finished = True
                 print(f"\n{GREEN}Simulation Successfully Finished!\n{RESET}")
@@ -341,12 +366,18 @@ class SimulationView:
                 if self.erb_counter == 0:
                     print(f"{RED}Carvizes Survived!{RESET}\n")
 
+<<<<<<< HEAD
                 # Gets the final values of the simulation
                 self.dp.get_final_values()
                 # Saves all the values
                 self.dp.save_simulation_data()
                 self.animation_paused = True
                 # Reads the pickle file to be shown on the terminal after.
+=======
+                self.dp.get_final_values()
+                self.dp.save_simulation_data()
+                self.animation_paused = True
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
                 self.dp.read_pickle_file('simulation_data.pickle')
 
             return self.im, self.line_erb, self.line_car # Returns them each time it updates to be shown on the graph and the grid.
@@ -391,7 +422,11 @@ class SimulationView:
 
             # Disable the "Start" button
             self.start_button.set_active(False)
+<<<<<<< HEAD
             self.start_button.color = 'gray'
+=======
+            self.start_button.color = 'gray'  # Optional: Change button color to indicate it's disabled
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 
         elif not self.animation_paused and self.has_started:
             # if its called while running by reset button it creates 

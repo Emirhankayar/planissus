@@ -1,9 +1,12 @@
 class SimulationController:
+<<<<<<< HEAD
     """
     SimulationController class is only used in FuncAnimation update method
     of the View module, since the simulate method requires an updating cellsList
     """
 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
 
     def simulate(self, cellsList):
         """
@@ -31,7 +34,10 @@ class SimulationController:
                 if cell.pride:
                     cell.death_from_vegetob(cellsList)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
         for row in cellsList:
             for cell in row:
                 if cell.erbast:
@@ -59,4 +65,8 @@ class SimulationController:
                 if cell.erbast:
                     cell.erbast.groupAging()
                 if cell.pride:
+<<<<<<< HEAD
                     cell.pride.groupAging()
+=======
+                    cell.pride.groupAging()
+>>>>>>> b81903c3b19e67e4587139dde4129109c10c279d
